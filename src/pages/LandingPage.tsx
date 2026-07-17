@@ -21,6 +21,7 @@ import {
   FactoryIcon,
   Loader2Icon,
   MapPinIcon,
+  PhoneIcon,
   PlugIcon,
   RadioIcon,
   RocketIcon,
@@ -33,6 +34,10 @@ import { Link } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { Navbar } from '../components/Navbar';
 import { ParticleField } from '../components/ParticleField';
+import heroIllustration from '../Assets/hero.svg';
+import sectionFourIllustration from '../Assets/4.svg';
+import sectionFiveIllustration from '../Assets/5.svg';
+import sectionSixIllustration from '../Assets/6.svg';
 
 /* ---------------------------------------------------------------
    THEME TOKENS — white glassmorphism, indigo → cyan accent
@@ -76,6 +81,32 @@ export function LandingPage() {
   const [docsOpen, setDocsOpen] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
 
+  useEffect(() => {
+    const existing = document.getElementById('tawk-script');
+    if (!existing) {
+      (window as any).Tawk_API = (window as any).Tawk_API || {};
+      (window as any).Tawk_LoadStart = new Date();
+
+      const script = document.createElement('script');
+      script.id = 'tawk-script';
+      script.async = true;
+      script.src = 'https://embed.tawk.to/6a574e9f5913bf1d431a7eef/1jtigm843';
+      script.charset = 'UTF-8';
+      script.setAttribute('crossorigin', '*');
+      document.body.appendChild(script);
+    }
+
+    return () => {
+      const script = document.getElementById('tawk-script');
+      if (script) {
+        script.remove();
+      }
+      document.querySelectorAll('[id*="tawk"], [class*="tawk"]').forEach((el) => el.remove());
+      delete (window as any).Tawk_API;
+      delete (window as any).Tawk_LoadStart;
+    };
+  }, []);
+
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const { scrollYProgress: pageProgress } = useScroll();
 
@@ -95,7 +126,7 @@ export function LandingPage() {
 
       <SectionNav />
 
-      <Navbar onDocs={() => setDocsOpen(true)} />
+      <Navbar onDocs={() => setDocsOpen(true)} ctaLabel="FrameDock" ctaHref="/product" />
       <main>
         {/* ============================= HERO ============================= */}
         <section
@@ -119,7 +150,7 @@ export function LandingPage() {
                 <SparklesIcon size={12} /> Visual intelligence, without blind spots
               </p>
               <h1 className="mx-auto max-w-4xl text-4xl font-bold leading-[0.98] tracking-[-.065em] text-[#10111f] sm:text-6xl lg:text-7xl">
-                The Video AI Processing Pipeline for Real-Time Visual Intelligence.
+               The Video Processing Pipeline for Real Time Visual Intelligence. 
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[#656a80] sm:text-lg">
                 Turn raw video streams into structured intelligence in real time —
@@ -141,14 +172,22 @@ export function LandingPage() {
             </motion.div>
           </div>
 
-          {/* reserved breathing room — kept empty on purpose */}
+          <div className="pointer-events-none absolute inset-0 z-0 flex items-end justify-center px-0 sm:px-0">
+            <img
+              src={heroIllustration}
+              alt=""
+              className="h-full w-full object-cover object-center opacity-90"
+            />
+          </div>
+
           <div className="relative z-10 flex-1" />
           <motion.div style={{ opacity: heroOpacity }} className="pointer-events-none absolute inset-0" />
         </section>
 
         {/* ============================= PROBLEM — bento grid ============================= */}
-        <section className="relative bg-[#f6f7fb] px-5 py-24 sm:px-8">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={revealLeft} className="mx-auto max-w-7xl">
+        <section className="relative overflow-hidden bg-[#f6f7fb] px-5 py-24 sm:px-8">
+          <img src={sectionFourIllustration} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-30" />
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={revealLeft} className="relative z-10 mx-auto max-w-7xl">
             <p className="eyebrow">The operational gap</p>
             <h2 className="section-title max-w-2xl">
               Video is your richest source of truth. It's also your hardest data to use.
@@ -159,7 +198,7 @@ export function LandingPage() {
               six at once, not one at a time.
             </p>
 
-            <div className="mt-12 grid auto-rows-[170px] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid auto-rows-[minmax(170px,auto)] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
               { t: 'Unprocessed video data sitting dormant', d: 'Petabytes recorded, almost none of it ever queried again.', span: 'lg:col-span-2 lg:row-span-2 sm:row-span-2' },
               { t: 'Manual monitoring that drains teams', d: 'Operators watching walls of feeds for the one moment that matters.', span: '' },
@@ -182,8 +221,9 @@ export function LandingPage() {
         <Comparison />
 
         {/* ============================= PRODUCT ============================= */}
-        <section id="product" className="bg-[#eef0fa] px-5 py-24 sm:px-8">
-          <div className="mx-auto max-w-6xl">
+        <section id="product" className="relative overflow-hidden bg-[#eef0fa] px-5 py-24 sm:px-8">
+          <img src={sectionFiveIllustration} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-25" />
+          <div className="relative z-10 mx-auto max-w-6xl">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={revealUp}>
               <p className="eyebrow">One intelligent flow</p>
               <h2 className="section-title max-w-2xl">
@@ -196,7 +236,7 @@ export function LandingPage() {
             </motion.div>
             <div className="mt-16 space-y-16">
               <Solution title="Video Ingestion Engine" body="Bring every camera, edge device, cloud archive, and live source into a single observability plane." dir="left" />
-              <Solution flip title="AI Video Processing Layer" body="Run vision models where they make sense, with visual context preserved from frame to frame." dir="right" />
+              <Solution flip title="Smart Video Processing Layer" body="Run vision models where they make sense, with visual context preserved from frame to frame." dir="right" />
               <Solution title="Real-Time Event Detection" body="Surface the moments that matter, then route them to the people and systems that can act." dir="left" />
               <Solution flip title="Distributed Video Pipeline" body="Scale processing across workloads without forcing your team to operate a scattered stack." dir="right" />
               <Solution title="Video Intelligence Dashboard" body="Give operators a living view of streams, events, performance, and capacity." dir="left" dashboard />
@@ -205,7 +245,12 @@ export function LandingPage() {
         </section>
 
         {/* ============================= PIPELINE — scroll-drawn path ============================= */}
-        <PipelineSection />
+        <section className="relative overflow-hidden bg-[#f6f7fb] px-5 py-24 sm:px-8">
+          <img src={sectionSixIllustration} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-25" />
+          <div className="relative z-10">
+            <PipelineSection />
+          </div>
+        </section>
 
         {/* ============================= PROCESS — go live in 3 steps ============================= */}
         <ProcessSection />
@@ -226,7 +271,7 @@ export function LandingPage() {
               [CameraIcon, 'Retail'],
               [RadioIcon, 'Media'],
               [BoxesIcon, 'Logistics'],
-              [BracesIcon, 'AI research']].
+              [BracesIcon, 'Smart research']].
               map(([Icon, name]) =>
               <TiltCard key={name as string} Icon={Icon as typeof ShieldCheckIcon} name={name as string} />
               )}
@@ -255,11 +300,6 @@ export function LandingPage() {
                 Detailed reference material and integration guides are almost ready.
               </p>
             </div>
-            <button
-              onClick={() => setDocsOpen(true)}
-              className="shrink-0 rounded-xl border border-[#c7c9f7] bg-white/70 px-5 py-3 text-sm font-semibold text-[#4338ca] transition hover:bg-white">
-              Docs coming soon
-            </button>
           </motion.div>
         </section>
 
@@ -393,7 +433,7 @@ function Solution({
       variants={variant}
       className={`grid items-center gap-8 lg:grid-cols-2 lg:gap-16 ${flip ? 'lg:[&>*:first-child]:order-2' : ''}`}>
       <div>
-        <p className="font-mono text-xs uppercase tracking-[.18em] text-[#4f46e5]">FrameDock layer</p>
+        <p className="font-mono text-xs uppercase tracking-[.18em] text-[#4f46e5]">Framedock Layer </p>
         <h3 className="mt-4 text-3xl font-bold tracking-[-.05em]">{title}</h3>
         <p className="mt-4 max-w-md text-[15px] leading-7 text-[#656a80]">{body}</p>
         {dashboard &&
@@ -506,7 +546,7 @@ function PipelineSection() {
             </p>
           </div>
           <span className="w-fit rounded-full border border-[#4f46e5]/40 bg-[#4f46e5]/10 px-3 py-1.5 font-mono text-[11px] text-[#b3b8ff]">
-            Powered by NVIDIA SDK
+            Powered by advanced processing 
           </span>
         </motion.div>
 
@@ -734,6 +774,13 @@ function Pricing() {
     return undefined;
   };
 
+  const scrollToContact = () => {
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <section id="pricing" className="bg-[#f6f7fb] px-5 py-24 sm:px-8">
       <div className="mx-auto max-w-6xl">
@@ -792,11 +839,12 @@ function Pricing() {
             </ul>
 <div className="mt-8">
               {t.monthly === null ? (
-                <a
-                  href="mailto:hello@framedock.one"
+                <button
+                  type="button"
+                  onClick={scrollToContact}
                   className="flex w-full items-center justify-center rounded-xl border border-[#4f46e5]/30 bg-white/60 px-4 py-3 text-sm font-semibold text-[#4338ca] transition hover:bg-white">
                   Contact us
-                </a>
+                </button>
               ) : (
                 <a
                   href={getCheckoutHref(t.name)}
@@ -933,6 +981,10 @@ function Contact() {
             <div className="flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-white/70 text-[#4f46e5]"><BracesIcon size={16} /></span>
               connect@framedock.one
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-white/70 text-[#4f46e5]"><PhoneIcon size={16} /></span>
+              +1 (213) 555-2118
             </div>
             <div className="flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-white/70 text-[#4f46e5]"><MapPinIcon size={16} /></span>

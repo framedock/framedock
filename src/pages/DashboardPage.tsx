@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  type User,
+} from 'firebase/auth';
+import { auth } from '../firebase';
 
 /* =========================================================================
    FRAMEDOCK — AI Video Intelligence Command Center
@@ -1352,11 +1362,8 @@ function BrandMark() {
 }
 
 function Sidebar({ active, onNavigate, open, onClose }: { active: SectionId; onNavigate: (s: SectionId) => void; open: boolean; onClose: () => void }) {
-  const navigate = useNavigate();
-
-  // Wire this up to your real auth provider — kept framework-agnostic here.
-  function handleSignOut() {
-    navigate('/login', { replace: true });
+  async function handleSignOut() {
+    await signOut(auth);
   }
 
   return (
@@ -1404,7 +1411,7 @@ const INITIAL_NOTIFICATIONS = [
   { id: 4, title: "Weekly Stream Health Summary sent", body: "Delivered to your inbox.", time: "3h ago", read: false, kind: "good" as const },
 ];
 
-function Topbar({ onBurger, section, theme, onToggleTheme }: { onBurger: () => void; section: SectionId; theme: "light" | "dark"; onToggleTheme: () => void }) {
+function Topbar({ onBurger, section, theme, onToggleTheme, user, onSignOut }: { onBurger: () => void; section: SectionId; theme: "light" | "dark"; onToggleTheme: () => void; user: User | null; onSignOut: () => void }) {
   const { toast, navigate } = useApp();
   const now = useLiveClock();
   const [latency, setLatency] = useState(82);
@@ -1538,9 +1545,10 @@ function Topbar({ onBurger, section, theme, onToggleTheme }: { onBurger: () => v
           <Ic name={theme === "light" ? "moon" : "sun"} size={16} />
         </button>
         <div className="fd-userchip">
-          <div className="avatar" style={{ width: 32, height: 32, fontSize: 11.5 }}>AU</div>
-          <div><div className="fd-username">Admin User</div><div className="fd-usermail">admin@framedock.one</div></div>
+          <div className="avatar" style={{ width: 32, height: 32, fontSize: 11.5 }}>{user?.email?.charAt(0).toUpperCase() || 'U'}</div>
+          <div><div className="fd-username">{user?.displayName || 'FrameDock User'}</div><div className="fd-usermail">{user?.email || 'Signed in securely'}</div></div>
         </div>
+        <button className="fd-btn fd-btnsm" onClick={onSignOut}>Sign out</button>
       </div>
     </header>
   );
@@ -1550,16 +1558,194 @@ function Topbar({ onBurger, section, theme, onToggleTheme }: { onBurger: () => v
    Root component
    ================================================================ */
 
+function getPasswordStrength(password: string) {
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[0-9]/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  if (password.length >= 12) score += 1;
+
+  if (score <= 2) return { label: 'Weak', color: '#ef4444' };
+  if (score <= 4) return { label: 'Medium', color: '#f59e0b' };
+  return { label: 'Strong', color: '#10b981' };
+}
+
+function AuthGate({ onAuthenticated }: { onAuthenticated: (user: User) => void }) {
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const passwordStrength = getPasswordStrength(password);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+
+    if (mode === 'signup' && password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    if (mode === 'signup' && passwordStrength.label === 'Weak') {
+      setError('Please choose a stronger password.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const credential = mode === 'login'
+        ? await signInWithEmailAndPassword(auth, email, password)
+        : await createUserWithEmailAndPassword(auth, email, password);
+
+      onAuthenticated(credential.user);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Authentication failed';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const credential = await signInWithPopup(auth, provider);
+      onAuthenticated(credential.user);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Google sign-in failed';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f6f7fb] px-5 py-20 text-[#10111f] sm:px-8">
+      <div className="mx-auto flex max-w-md flex-col rounded-3xl border border-[#e1e3f5] bg-white/80 p-8 shadow-[0_30px_80px_rgba(15,31,31,0.12)] backdrop-blur">
+        <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#4f46e5]">FrameDock</p>
+        <h1 className="mt-3 text-3xl font-semibold">Access your dashboard</h1>
+        <p className="mt-3 text-sm leading-6 text-[#5b5f75]">
+          Sign in or create an account to unlock the FrameDock command center.
+        </p>
+
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[#10111f]" htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="w-full rounded-xl border border-[#e1e3f5] bg-[#f8f9fe] px-4 py-3 outline-none ring-0"
+              placeholder="you@company.com"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[#10111f]" htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full rounded-xl border border-[#e1e3f5] bg-[#f8f9fe] px-4 py-3 outline-none ring-0"
+              placeholder="At least 6 characters"
+            />
+            {mode === 'signup' && password && (
+              <div className="mt-2">
+                <div className="mb-1 flex items-center justify-between text-xs text-[#5b5f75]">
+                  <span>Password strength</span>
+                  <span style={{ color: passwordStrength.color }}>{passwordStrength.label}</span>
+                </div>
+                <div className="h-2 rounded-full bg-[#e1e3f5]">
+                  <div className="h-2 rounded-full" style={{ width: `${Math.min((password.length / 16) * 100, 100)}%`, background: passwordStrength.color }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {mode === 'signup' && (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#10111f]" htmlFor="confirmPassword">Confirm password</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                className="w-full rounded-xl border border-[#e1e3f5] bg-[#f8f9fe] px-4 py-3 outline-none ring-0"
+                placeholder="Re-enter password"
+              />
+            </div>
+          )}
+
+          {error && <p className="rounded-xl border border-[#ef4444]/20 bg-[#fee2e2] px-3 py-2 text-sm text-[#b91c1c]">{error}</p>}
+
+          <button type="submit" disabled={loading} className="flex w-full items-center justify-center rounded-xl bg-[#173d3d] px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:opacity-70">
+            {loading ? 'Please wait...' : mode === 'login' ? 'Log in' : 'Create account'}
+          </button>
+        </form>
+
+        <div className="mt-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-[#e1e3f5]" />
+          <span className="text-xs uppercase tracking-[0.25em] text-[#8a8fa3]">or</span>
+          <div className="h-px flex-1 bg-[#e1e3f5]" />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#e1e3f5] bg-white px-4 py-3 text-sm font-semibold text-[#10111f] transition hover:bg-[#f8f9fe] disabled:opacity-70"
+        >
+          <span className="text-base">G</span>
+          Continue with Google
+        </button>
+
+        <button type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setConfirmPassword(''); }} className="mt-5 text-sm font-medium text-[#4f46e5]">
+          {mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Log in'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard() {
   const [section, setSection] = useState<SectionId>("command");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const { toasts, push } = useToasts();
 
   const navigate = (s: SectionId) => { setSection(s); setMobileOpen(false); };
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [section]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthReady(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+  };
+
   const ctxValue = useMemo(() => ({ navigate, toast: push, theme }), [theme]);
 
   const sectionMap: Record<SectionId, React.ReactNode> = {
@@ -1576,13 +1762,21 @@ export function Dashboard() {
     account: <AccountSettings />,
   };
 
+  if (!authReady) {
+    return <div className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm font-medium text-[#5b5f75]">Loading dashboard…</div>;
+  }
+
+  if (!user) {
+    return <AuthGate onAuthenticated={setUser} />;
+  }
+
   return (
     <AppCtx.Provider value={ctxValue}>
       <div className="fd-app" data-theme={theme}>
         <style>{CSS}</style>
         <Sidebar active={section} onNavigate={navigate} open={mobileOpen} onClose={() => setMobileOpen(false)} />
         <div className="fd-main">
-          <Topbar onBurger={() => setMobileOpen(true)} section={section} theme={theme} onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))} />
+          <Topbar onBurger={() => setMobileOpen(true)} section={section} theme={theme} onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))} user={user} onSignOut={handleSignOut} />
           <main className="fd-content">
             {sectionMap[section]}
             <div className="fd-footernote">

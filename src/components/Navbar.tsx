@@ -5,8 +5,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BrandMark } from './BrandMark';
 type NavbarProps = {
   onDocs?: () => void;
+  ctaLabel?: string;
+  ctaHref?: string;
 };
-export function Navbar({ onDocs }: NavbarProps) {
+export function Navbar({ onDocs, ctaLabel = 'Launch Dashboard', ctaHref = '/dashboard' }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -47,7 +49,6 @@ export function Navbar({ onDocs }: NavbarProps) {
         <Link
           to="/"
           className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[#20b896] rounded-lg">
-          
           <BrandMark inverse={isDashboard} />
         </Link>
         <div className="hidden items-center gap-6 md:flex">
@@ -68,10 +69,10 @@ export function Navbar({ onDocs }: NavbarProps) {
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <Link
-            to="/dashboard"
+            to={ctaHref}
             className="inline-flex items-center gap-1.5 rounded-xl bg-[#173d3d] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(16,61,57,.22)] transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#27b99d]">
             
-            Launch Dashboard <ArrowUpRightIcon size={14} />
+            {ctaLabel} <ArrowUpRightIcon size={14} />
           </Link>
         </div>
         <button
@@ -133,10 +134,10 @@ export function Navbar({ onDocs }: NavbarProps) {
           )}
             <Link
             onClick={() => setOpen(false)}
-            to="/dashboard"
+            to={ctaHref}
             className="mt-2 block rounded-xl bg-[#173d3d] px-4 py-3 text-center text-sm font-semibold text-white">
             
-              Launch Dashboard
+              {ctaLabel}
             </Link>
           </motion.div>
         }
