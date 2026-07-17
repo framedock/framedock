@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MenuIcon, XIcon, ArrowUpRightIcon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -10,32 +10,50 @@ type NavbarProps = {
 };
 export function Navbar({ onDocs, ctaLabel = 'Launch Dashboard', ctaHref = '/dashboard' }: NavbarProps) {
   const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('product');
   const location = useLocation();
   const navigate = useNavigate();
   const isDashboard = location.pathname === '/dashboard';
+
   const scroll = (id: string) => {
     setOpen(false);
-    if (isDashboard) navigate(`/#${id}`);else
+    setActiveSection(id);
+    if (isDashboard) {
+      navigate(`/#${id}`);
+      return;
+    }
 
     document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     });
   };
+
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    if (hash) {
+      setActiveSection(hash);
+    }
+  }, [location.hash]);
+
   const navItems = [
   {
+    id: 'product',
     label: 'Product',
     action: () => scroll('product')
   },
   {
+    id: 'pipeline',
     label: 'Pipeline',
     action: () => scroll('pipeline')
   },
   {
+    id: 'pricing',
     label: 'Pricing',
     action: () => scroll('pricing')
   },
   {
+    id: 'contact',
     label: 'Contact Us',
     action: () => scroll('contact')
   }
@@ -56,7 +74,7 @@ export function Navbar({ onDocs, ctaLabel = 'Launch Dashboard', ctaHref = '/dash
           <button
             key={item.label}
             onClick={item.action}
-            className={`group flex items-center gap-1 text-sm font-medium transition-colors ${isDashboard ? 'text-white/70 hover:text-white' : 'text-[#305253] hover:text-[#0f7871]'}`}>
+            className={`group flex items-center gap-1 text-sm font-medium transition-colors ${activeSection === item.id ? (isDashboard ? 'text-white' : 'text-[#0f7871]') : (isDashboard ? 'text-white/70 hover:text-white' : 'text-[#305253] hover:text-[#0f7871]')}`}>
             
               {item.label}
               {item.coming &&
@@ -124,7 +142,7 @@ export function Navbar({ onDocs, ctaLabel = 'Launch Dashboard', ctaHref = '/dash
               delay: index * 0.05
             }}
             onClick={item.action}
-            className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-semibold text-[#173d3d] hover:bg-white/70">
+            className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-semibold ${activeSection === item.id ? 'bg-[#173d3d] text-white shadow-sm' : 'text-[#173d3d] hover:bg-white/70'}`}>
             
                 {item.label}
                 {item.coming &&

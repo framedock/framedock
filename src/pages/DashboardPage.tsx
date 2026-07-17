@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import logoSvg from '../Assets/logo.svg';
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -1355,8 +1356,12 @@ const NAV: { group: string; items: { id: SectionId; label: string; icon: string;
 
 function BrandMark() {
   return (
-    <div className="fd-brandmark">
-      <Ic name="camera" size={20} />
+    <div className="fd-brandmark" style={{ padding: 0, overflow: 'visible', background: 'transparent' }}>
+      <img
+        src={logoSvg}
+        alt="FrameDock"
+        className="h-14 w-auto max-w-[220px] object-contain"
+      />
     </div>
   );
 }
@@ -1372,10 +1377,6 @@ function Sidebar({ active, onNavigate, open, onClose }: { active: SectionId; onN
       <aside className={`fd-sidebar ${open ? "open" : ""}`}>
         <div className="fd-brand">
           <BrandMark />
-          <div>
-            <div className="fd-brandname">FrameDock</div>
-            <div className="fd-brandsub">Video AI Pipeline</div>
-          </div>
         </div>
         <nav className="fd-navscroll">
           {NAV.map((g) => (
@@ -1629,6 +1630,10 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (user: User) => void }
   return (
     <div className="min-h-screen bg-[#f6f7fb] px-5 py-20 text-[#10111f] sm:px-8">
       <div className="mx-auto flex max-w-md flex-col rounded-3xl border border-[#e1e3f5] bg-white/80 p-8 shadow-[0_30px_80px_rgba(15,31,31,0.12)] backdrop-blur">
+        <Link to="/" className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-[#4f46e5] transition hover:text-[#173d3d]">
+          <span aria-hidden="true">←</span>
+          Back home
+        </Link>
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#4f46e5]">FrameDock</p>
         <h1 className="mt-3 text-3xl font-semibold">Access your dashboard</h1>
         <p className="mt-3 text-sm leading-6 text-[#5b5f75]">
@@ -1706,9 +1711,14 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (user: User) => void }
           type="button"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#e1e3f5] bg-white px-4 py-3 text-sm font-semibold text-[#10111f] transition hover:bg-[#f8f9fe] disabled:opacity-70"
+          className="mt-4 flex w-full items-center justify-center gap-3 rounded-xl border border-[#dfe1e5] bg-white px-4 py-3 text-sm font-semibold text-[#3c4043] shadow-sm transition hover:bg-[#f8f9fa] hover:shadow disabled:opacity-70"
         >
-          <span className="text-base">G</span>
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+            <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-.9 2.2-1.9 2.9l3.1 2.4C20.4 18 21 15.7 21 12.9c0-1-.1-1.9-.3-2.8L12 10.2z" />
+            <path fill="#34A853" d="M12 21c2.6 0 4.8-.8 6.4-2.2l-3.1-2.4c-.8.5-1.9 1-3.3 1-2.5 0-4.6-1.7-5.4-4l-3.2 2.5C4.7 18.3 8.1 21 12 21z" />
+            <path fill="#FBBC05" d="M6.6 13.4c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7L3.4 7.5C2.8 8.9 2.3 10.4 2.3 12s.5 3.1 1.1 4.5l3.2-2.5z" />
+            <path fill="#4285F4" d="M12 6.2c1.4 0 2.7.5 3.7 1.4l2.8-2.8C16.8 3.3 14.6 2.3 12 2.3 8.1 2.3 4.7 4.7 3.4 7.5l3.2 2.5c.8-2.3 2.9-4 5.4-4z" />
+          </svg>
           Continue with Google
         </button>
 
@@ -1726,6 +1736,8 @@ export function Dashboard() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const hasAutoRefreshed = useRef(false);
+  const refreshKey = "framedock-dashboard-refresh";
   const { toasts, push } = useToasts();
 
   const navigate = (s: SectionId) => { setSection(s); setMobileOpen(false); };
@@ -1741,6 +1753,23 @@ export function Dashboard() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const shouldRefresh = authReady && user && !hasAutoRefreshed.current && !sessionStorage.getItem(refreshKey);
+
+    if (!shouldRefresh) {
+      return;
+    }
+
+    hasAutoRefreshed.current = true;
+    sessionStorage.setItem(refreshKey, "1");
+
+    const timer = window.setTimeout(() => {
+      window.location.reload();
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [authReady, user, refreshKey]);
 
   const handleSignOut = async () => {
     await signOut(auth);

@@ -126,7 +126,7 @@ export function LandingPage() {
 
       <SectionNav />
 
-      <Navbar onDocs={() => setDocsOpen(true)} ctaLabel="FrameDock" ctaHref="/product" />
+      <Navbar onDocs={() => setDocsOpen(true)} ctaLabel="FrameDock.V1" ctaHref="/product" />
       <main>
         {/* ============================= HERO ============================= */}
         <section
@@ -160,7 +160,7 @@ export function LandingPage() {
                 <Link
                   to="/dashboard"
                   className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#4f46e5] to-[#4338ca] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_15px_28px_rgba(79,70,229,.3)] transition hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f46e5]">
-                  Launch Dashboard{' '}
+                  FrameDock.V1{' '}
                   <ArrowRightIcon size={16} className="transition group-hover:translate-x-1" />
                 </Link>
                 <button
@@ -438,7 +438,7 @@ function Solution({
         <p className="mt-4 max-w-md text-[15px] leading-7 text-[#656a80]">{body}</p>
         {dashboard &&
         <Link to="/dashboard" className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-[#4338ca] hover:gap-2">
-          Open the dashboard <ChevronRightIcon size={16} />
+          Open FrameDock.V1 <ChevronRightIcon size={16} />
         </Link>
         }
       </div>
@@ -1064,7 +1064,7 @@ function MagneticButton() {
           ref={ref}
           to="/dashboard"
           className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] px-6 py-3.5 text-sm font-bold text-white shadow-[0_18px_36px_rgba(79,70,229,.35)]">
-          Launch Dashboard <ArrowRightIcon size={16} />
+          FrameDock.V1<ArrowRightIcon size={16} />
         </Link>
       </motion.div>
     </motion.div>);
